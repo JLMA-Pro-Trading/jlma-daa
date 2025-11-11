@@ -25,7 +25,10 @@ pub enum EconomyError {
     
     #[error("Insufficient funds: required {required}, available {available}")]
     InsufficientFunds { required: u128, available: u128 },
-    
+
+    #[error("Account not found: {0}")]
+    AccountNotFound(String),
+
     #[error("Resource not available: {0}")]
     ResourceNotAvailable(String),
     

@@ -26,17 +26,18 @@ pub enum OrchestratorError {
     #[error("API server error: {0}")]
     ApiError(String),
     
-    #[error("Chain integration error: {0}")]
-    ChainError(#[from] daa_chain::ChainError),
+    // Chain integration disabled for now - remove if daa_chain is not available
+    // #[error("Chain integration error: {0}")]
+    // ChainError(#[from] daa_chain::ChainError),
     
     #[error("Economy error: {0}")]
     EconomyError(#[from] daa_economy::EconomyError),
     
     #[error("Rules engine error: {0}")]
-    RulesError(#[from] daa_rules::RuleError),
-    
+    RulesError(#[from] daa_rules::RulesError),
+
     #[error("AI error: {0}")]
-    AiError(#[from] daa_ai::AiError),
+    AiError(#[from] daa_ai::AIError),
     
     #[error("Network error: {0}")]
     NetworkError(String),

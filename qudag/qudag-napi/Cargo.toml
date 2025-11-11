@@ -16,13 +16,11 @@ crate-type = ["cdylib"]
 napi = "2.16"
 napi-derive = "2.16"
 
-# QuDAG dependencies (local workspace)
-qudag-core = { path = "../core" }
-
 # Cryptography
 blake3 = "1.5"
 ml-kem = "0.2"
-ml-dsa = "0.5"
+ml-dsa = "0.1.0-rc.2"
+kem = "0.3.0-pre.0"
 
 # Async runtime
 tokio = { version = "1.0", features = ["full"] }
