@@ -17,6 +17,9 @@ pub mod coordinator;
 pub mod workflow;
 pub mod services;
 pub mod events;
+pub mod autonomy;
+pub mod config;
+pub mod error;
 
 #[cfg(feature = "chain-integration")]
 pub mod chain_integration;

@@ -7,6 +7,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.75+-93450a.svg?logo=rust)](https://www.rust-lang.org/)
 [![Built with QuDAG](https://img.shields.io/badge/Built%20with-QuDAG-blue)](https://github.com/ruvnet/qudag)
+[![NAPI Build](https://github.com/ruvnet/daa/actions/workflows/napi-build.yml/badge.svg)](https://github.com/ruvnet/daa/actions/workflows/napi-build.yml)
+[![NAPI Test](https://github.com/ruvnet/daa/actions/workflows/napi-test.yml/badge.svg)](https://github.com/ruvnet/daa/actions/workflows/napi-test.yml)
 
 ---
 

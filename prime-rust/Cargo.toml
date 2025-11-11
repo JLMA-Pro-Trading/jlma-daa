@@ -6,6 +6,7 @@ members = [
     "crates/prime-trainer",
     "crates/prime-coordinator",
     "crates/prime-cli",
+    "prime-napi",
 ]
 
 [workspace.package]

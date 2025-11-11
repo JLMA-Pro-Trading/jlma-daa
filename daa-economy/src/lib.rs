@@ -10,6 +10,7 @@ pub mod risk;
 pub mod optimization;
 pub mod trading;
 pub mod error;
+pub mod accounts;
 
 pub use error::{EconomyError, Result};
 pub use market::{MarketAnalyzer, MarketData, PricePoint};

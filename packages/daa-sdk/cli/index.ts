@@ -32,23 +32,91 @@ program
  * Initialize a new DAA project
  */
 program
-  .command('init <name>')
+  .command('init [name]')
   .description('Initialize a new DAA project')
   .option('-t, --template <type>', 'Project template (basic|full-stack|ml-training)', 'basic')
-  .option('--native', 'Use native bindings (default)')
-  .option('--wasm', 'Use WASM bindings only')
+  .option('--no-install', 'Skip dependency installation')
+  .option('--no-git', 'Skip git initialization')
   .option('--typescript', 'Use TypeScript (default)', true)
   .option('--javascript', 'Use JavaScript instead of TypeScript')
-  .action(async (name: string, options: any) => {
-    console.log(chalk.blue(`\n🚀 Creating DAA project: ${name}\n`));
+  .action(async (name: string | undefined, options: any) => {
+    const {
+      scaffoldProject,
+      validateProjectName,
+      generateProjectSummary,
+      TEMPLATES,
+      getTemplateInfo,
+    } = await import('./templates');
+    const {
+      interactiveSetup,
+      confirm,
+      displayTemplateDetails,
+      ProgressIndicator,
+    } = await import('./prompts');
 
-    console.log(chalk.gray('Template:'), options.template);
-    console.log(chalk.gray('Runtime:'), options.wasm ? 'WASM' : 'Native + WASM');
-    console.log(chalk.gray('Language:'), options.javascript ? 'JavaScript' : 'TypeScript');
+    try {
+      // Interactive mode if no name provided
+      if (!name) {
+        const setup = await interactiveSetup();
+        name = setup.name;
+        options.template = setup.template;
+        options.install = setup.installDeps;
+        options.git = setup.gitInit;
+      }
 
-    // TODO: Implement project scaffolding
-    console.log(chalk.yellow('\n⚠️  Project scaffolding not yet implemented'));
-    console.log(chalk.gray('Run: npm install daa-sdk to install the SDK manually\n'));
+      // Validate project name
+      const validation = validateProjectName(name);
+      if (!validation.valid) {
+        console.log(chalk.red(`\n❌ ${validation.error}\n`));
+        process.exit(1);
+      }
+
+      // Validate template
+      const templateInfo = getTemplateInfo(options.template);
+      if (!templateInfo) {
+        console.log(chalk.red(`\n❌ Unknown template: ${options.template}\n`));
+        console.log(chalk.gray('Available templates:'));
+        Object.keys(TEMPLATES).forEach((t) => {
+          console.log(chalk.gray(`  • ${t}`));
+        });
+        console.log();
+        process.exit(1);
+      }
+
+      console.log(chalk.blue('\n🚀 Creating DAA Project\n'));
+
+      // Display template details
+      displayTemplateDetails(templateInfo.name, templateInfo);
+
+      // Confirm creation
+      const shouldCreate = await confirm('Create project with these settings?', true);
+      if (!shouldCreate) {
+        console.log(chalk.yellow('\n⚠️  Project creation cancelled\n'));
+        process.exit(0);
+      }
+
+      // Create project
+      const progress = new ProgressIndicator('📦 Creating project');
+      progress.start();
+
+      const scaffoldOptions = {
+        name,
+        template: options.template,
+        typescript: !options.javascript,
+        installDeps: options.install !== false,
+        gitInit: options.git !== false,
+      };
+
+      await scaffoldProject(scaffoldOptions);
+
+      progress.stop(chalk.green('✅ Project created successfully!'));
+
+      // Display summary
+      console.log(generateProjectSummary(scaffoldOptions));
+    } catch (error: any) {
+      console.log(chalk.red(`\n❌ Error: ${error.message}\n`));
+      process.exit(1);
+    }
   });
 
 /**
@@ -147,16 +215,82 @@ program
   });
 
 /**
+ * List available templates
+ */
+program
+  .command('templates')
+  .description('List available project templates')
+  .action(async () => {
+    const { listTemplates, getTemplateInfo } = await import('./templates');
+    const { displayTemplateDetails } = await import('./prompts');
+
+    console.log(chalk.blue('\n📦 Available Templates\n'));
+
+    const templates = listTemplates();
+    templates.forEach((template) => {
+      displayTemplateDetails(template.name, template);
+    });
+
+    console.log(chalk.gray('💡 Create a new project: npx daa-sdk init my-project\n'));
+  });
+
+/**
  * Show examples
  */
 program
   .command('examples')
   .description('Show usage examples')
-  .action(() => {
+  .option('-t, --template <type>', 'Show examples for specific template')
+  .action((options: any) => {
     console.log(chalk.blue('\n📚 DAA SDK Examples\n'));
 
-    console.log(chalk.bold('1. Basic Usage:'));
-    console.log(chalk.gray(`
+    if (options.template) {
+      // Show template-specific examples
+      if (options.template === 'basic') {
+        console.log(chalk.bold('Basic Template Examples:'));
+        console.log(chalk.gray(`
+  // ML-KEM Key Encapsulation
+  const mlkem = daa.crypto.mlkem();
+  const keypair = mlkem.generateKeypair();
+  const { ciphertext, sharedSecret } = mlkem.encapsulate(keypair.publicKey);
+
+  // Digital Signatures
+  const mldsa = daa.crypto.mldsa();
+  const signature = mldsa.sign(secretKey, message);
+  const isValid = mldsa.verify(publicKey, message, signature);
+        `));
+      } else if (options.template === 'full-stack') {
+        console.log(chalk.bold('Full-Stack Template Examples:'));
+        console.log(chalk.gray(`
+  // Start MRAP Orchestrator
+  await daa.orchestrator.start();
+
+  // Create Workflow
+  const workflow = await daa.orchestrator.createWorkflow({
+    steps: [/* workflow definition */],
+  });
+
+  // Token Economy
+  await daa.economy.transfer('agent-1', 'agent-2', 100);
+        `));
+      } else if (options.template === 'ml-training') {
+        console.log(chalk.bold('ML Training Template Examples:'));
+        console.log(chalk.gray(`
+  // Start Federated Training
+  const session = await daa.prime.startTraining({
+    model: 'gpt-mini',
+    nodes: 10,
+    privacy: { differentialPrivacy: true, epsilon: 1.0 },
+  });
+
+  // Monitor Progress
+  const progress = await daa.prime.getProgress(session.id);
+        `));
+      }
+    } else {
+      // Show general examples
+      console.log(chalk.bold('1. Basic Usage:'));
+      console.log(chalk.gray(`
   import { DAA } from 'daa-sdk';
 
   const daa = new DAA();
@@ -165,10 +299,10 @@ program
   // Use quantum-resistant crypto
   const mlkem = daa.crypto.mlkem();
   const keypair = mlkem.generateKeypair();
-    `));
+      `));
 
-    console.log(chalk.bold('2. Orchestrator:'));
-    console.log(chalk.gray(`
+      console.log(chalk.bold('2. Orchestrator:'));
+      console.log(chalk.gray(`
   import { DAA } from 'daa-sdk';
 
   const daa = new DAA({ orchestrator: { enableMRAP: true } });
@@ -179,10 +313,10 @@ program
 
   // Monitor system state
   const state = await daa.orchestrator.monitor();
-    `));
+      `));
 
-    console.log(chalk.bold('3. Federated Learning:'));
-    console.log(chalk.gray(`
+      console.log(chalk.bold('3. Federated Learning:'));
+      console.log(chalk.gray(`
   import { DAA } from 'daa-sdk';
 
   const daa = new DAA({ prime: { enableTraining: true } });
@@ -193,9 +327,10 @@ program
     model: 'gpt-mini',
     nodes: 10,
   });
-    `));
+      `));
 
-    console.log();
+      console.log(chalk.gray('\n💡 See template-specific examples: npx daa-sdk examples --template <name>\n'));
+    }
   });
 
 // Parse command line arguments

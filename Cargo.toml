@@ -1,10 +1,11 @@
 [workspace]
 members = [
     "daa-chain",
-    "daa-economy", 
+    "daa-economy",
     "daa-rules",
     "daa-ai",
     "daa-orchestrator",
+    "daa-orchestrator/daa-napi",
     "daa-cli",
     "daa-mcp",
     "daa-compute"

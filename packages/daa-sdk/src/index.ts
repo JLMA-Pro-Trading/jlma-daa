@@ -11,8 +11,8 @@
 
 export * from './platform';
 export * from './qudag';
-export * from './orchestrator';
-export * from './prime';
+// export * from './orchestrator'; // TODO: Implement orchestrator bindings
+// export * from './prime'; // TODO: Implement prime bindings
 
 import { detectPlatform, loadQuDAG, loadOrchestrator, loadPrime } from './platform';
 
@@ -90,21 +90,25 @@ export class DAA {
 
     try {
       // Load QuDAG (crypto & networking)
-      if (this.config.qudag !== false) {
+      if (this.config.qudag !== undefined && typeof this.config.qudag === 'object' && this.config.qudag !== null) {
+        this.qudag = await loadQuDAG(this.platform);
+        console.log('✅ QuDAG loaded');
+      } else if (this.config.qudag === undefined) {
+        // Load by default if not specified
         this.qudag = await loadQuDAG(this.platform);
         console.log('✅ QuDAG loaded');
       }
 
-      // Load Orchestrator (MRAP & workflows)
-      if (this.config.orchestrator !== false) {
-        this.orchestratorLib = await loadOrchestrator(this.platform);
-        console.log('✅ Orchestrator loaded');
+      // Load Orchestrator (MRAP & workflows) - TODO: Implement
+      if (this.config.orchestrator !== undefined && typeof this.config.orchestrator === 'object' && this.config.orchestrator !== null) {
+        // this.orchestratorLib = await loadOrchestrator(this.platform);
+        console.log('⚠️  Orchestrator not yet implemented');
       }
 
-      // Load Prime (ML training)
-      if (this.config.prime !== false) {
-        this.primeLib = await loadPrime(this.platform);
-        console.log('✅ Prime ML loaded');
+      // Load Prime (ML training) - TODO: Implement
+      if (this.config.prime !== undefined && typeof this.config.prime === 'object' && this.config.prime !== null) {
+        // this.primeLib = await loadPrime(this.platform);
+        console.log('⚠️  Prime ML not yet implemented');
       }
 
       this.initialized = true;
@@ -138,7 +142,7 @@ export class DAA {
      */
     mlkem: () => {
       this.ensureInitialized();
-      return new this.qudag.Crypto.MlKem768();
+      return new this.qudag.MlKem768();
     },
 
     /**
@@ -146,23 +150,31 @@ export class DAA {
      */
     mldsa: () => {
       this.ensureInitialized();
-      return new this.qudag.Crypto.MlDsa();
+      return new this.qudag.MlDsa();
     },
 
     /**
      * BLAKE3 cryptographic hash function
      */
-    blake3: (data: Uint8Array): Uint8Array => {
+    blake3: (data: Buffer): Buffer => {
       this.ensureInitialized();
-      return this.qudag.Crypto.blake3Hash(data);
+      return this.qudag.Blake3.hash(data);
+    },
+
+    /**
+     * BLAKE3 hash as hex string
+     */
+    blake3Hex: (data: Buffer): string => {
+      this.ensureInitialized();
+      return this.qudag.Blake3.hashHex(data);
     },
 
     /**
      * Quantum fingerprinting for data integrity
      */
-    quantumFingerprint: (data: Uint8Array): string => {
+    quantumFingerprint: (data: Buffer): string => {
       this.ensureInitialized();
-      return this.qudag.Crypto.quantumFingerprint(data);
+      return this.qudag.Blake3.quantumFingerprint(data);
     },
   };
 

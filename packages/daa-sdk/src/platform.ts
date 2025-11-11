@@ -74,10 +74,15 @@ export async function loadQuDAG(platform?: 'native' | 'wasm') {
 
   if (targetPlatform === 'native') {
     try {
-      console.log('📦 Loading QuDAG native bindings...');
-      // Dynamic import for native bindings
-      const native = await import('@daa/qudag-native');
-      return native;
+      console.log('📦 Loading QuDAG native bindings (@daa/qudag-native)...');
+      // Import the wrapper module which loads the NAPI bindings
+      const qudag = await import('./qudag');
+
+      // Initialize the native module
+      const initMsg = qudag.init();
+      console.log(`✅ ${initMsg}`);
+
+      return qudag;
     } catch (error) {
       console.warn('⚠️  Failed to load native bindings, falling back to WASM:', error);
       return loadQuDAGWasm();
@@ -90,24 +95,34 @@ export async function loadQuDAG(platform?: 'native' | 'wasm') {
 /**
  * Load QuDAG WASM bindings
  */
-async function loadQuDAGWasm() {
+async function loadQuDAGWasm(): Promise<any> {
   console.log('📦 Loading QuDAG WASM bindings...');
-  const wasm = await import('qudag-wasm');
-  await wasm.default(); // Initialize WASM module
-  return wasm;
+  try {
+    // Dynamic import to avoid TypeScript errors when package isn't installed
+    const wasm = await import('qudag-wasm' as any);
+    if (wasm.default) {
+      await wasm.default(); // Initialize WASM module
+    }
+    return wasm;
+  } catch (error) {
+    throw new Error(`WASM bindings not available: ${error}`);
+  }
 }
 
 /**
  * Load Orchestrator bindings based on platform
+ *
+ * TODO: Implement orchestrator bindings
  */
-export async function loadOrchestrator(platform?: 'native' | 'wasm') {
+export async function loadOrchestrator(platform?: 'native' | 'wasm'): Promise<any> {
   const targetPlatform = platform || detectPlatform();
 
   if (targetPlatform === 'native') {
     try {
       console.log('📦 Loading Orchestrator native bindings...');
-      const native = await import('@daa/orchestrator-native');
-      return native;
+      // const native = await import('@daa/orchestrator-native');
+      // return native;
+      throw new Error('Orchestrator native bindings not yet implemented');
     } catch (error) {
       console.warn('⚠️  Orchestrator native bindings not available');
       throw new Error('Orchestrator WASM bindings not yet implemented');
@@ -119,15 +134,18 @@ export async function loadOrchestrator(platform?: 'native' | 'wasm') {
 
 /**
  * Load Prime ML bindings based on platform
+ *
+ * TODO: Implement Prime ML bindings
  */
-export async function loadPrime(platform?: 'native' | 'wasm') {
+export async function loadPrime(platform?: 'native' | 'wasm'): Promise<any> {
   const targetPlatform = platform || detectPlatform();
 
   if (targetPlatform === 'native') {
     try {
       console.log('📦 Loading Prime ML native bindings...');
-      const native = await import('@daa/prime-native');
-      return native;
+      // const native = await import('@daa/prime-native');
+      // return native;
+      throw new Error('Prime ML native bindings not yet implemented');
     } catch (error) {
       console.warn('⚠️  Prime ML native bindings not available');
       throw new Error('Prime ML WASM bindings not yet implemented');
